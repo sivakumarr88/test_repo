@@ -1,1 +1,24 @@
+def run() {
+  stage('Module1 - Build (placeholder)') {
+    echo "Running Module1 build placeholder"
+    // Example: sh 'dir' on Windows agent or sh 'ls -la' on Linux
+  }
 
+  stage('Module1 - Test (placeholder)') {
+    echo "Running Module1 test placeholder"
+  }
+
+  stage('Module1 - Deploy (placeholder)') {
+    echo "Running Module1 deploy placeholder"
+  }
+
+  stage('Sonar (placeholder)') {
+    echo "Sonar disabled for now"
+  }
+
+  stage('Checkmarx (placeholder)') {
+    echo "Checkmarx disabled for now"
+  }
+}
+
+return this
