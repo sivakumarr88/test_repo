@@ -3,33 +3,39 @@ pipeline {
   options { timestamps() }
 
   environment {
-    DEFAULT_BASE = "origin/main"   // change to origin/master if your default branch is master
+    DEFAULT_BASE = "origin/main"   // change to origin/master if needed
   }
 
   stages {
     stage('Checkout') {
+      options { skipDefaultCheckout(true) }
       steps {
         checkout scm
-        sh 'git --version'
+        bat 'git --version'
       }
     }
 
     stage('Detect changes') {
       steps {
         script {
-          sh 'git fetch --all --prune'
+          bat 'git fetch --all --prune'
 
-          // If this is a PR build and CHANGE_TARGET is available, diff against that branch.
           def base = env.CHANGE_TARGET ? "origin/${env.CHANGE_TARGET}" : env.DEFAULT_BASE
 
-          // List changed files between base and current HEAD
-          def diff = sh(script: "git diff --name-only ${base}...HEAD", returnStdout: true).trim()
-          def files = diff ? diff.split("\n") as List : []
+          // Get changed files (CMD). If nothing changed, output will be empty.
+          def diffOut = bat(
+            script: "@echo off\r\ngit diff --name-only ${base}...HEAD",
+            returnStdout: true
+          ).trim()
+
+          // Jenkins on Windows may include extra CR; normalize
+          diffOut = diffOut.replace("\r", "")
+
+          def files = diffOut ? diffOut.split("\n") as List : []
 
           echo "Base for diff: ${base}"
           echo "Changed files:\n- " + (files ? files.join("\n- ") : "(none)")
 
-          // Flags for modules
           env.RUN_MODULE1 = files.any { it.startsWith("module1/") }.toString()
           env.RUN_MODULE2 = files.any { it.startsWith("module2/") }.toString()
 
