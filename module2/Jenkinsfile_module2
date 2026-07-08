@@ -1,1 +1,23 @@
+def run() {
+  stage('Module2 - Build (placeholder)') {
+    echo "Running Module2 build placeholder"
+  }
 
+  stage('Module2 - Test (placeholder)') {
+    echo "Running Module2 test placeholder"
+  }
+
+  stage('Module2 - Deploy (placeholder)') {
+    echo "Running Module2 deploy placeholder"
+  }
+
+  stage('Sonar (placeholder)') {
+    echo "Sonar disabled for now"
+  }
+
+  stage('Checkmarx (placeholder)') {
+    echo "Checkmarx disabled for now"
+  }
+}
+
+return this
