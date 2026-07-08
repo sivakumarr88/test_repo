@@ -60,7 +60,7 @@ pipeline {
           if (env.RUN_MODULE1 == "true") {
             branches["module1"] = {
               def m1 = load("module1/Jenkinsfile_module1")
-              m1.run()
+              m1.run1()
             }
           }
 
