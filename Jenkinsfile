@@ -24,7 +24,14 @@ pipeline {
 
           // Get changed files (CMD). If nothing changed, output will be empty.
           def diffOut = bat(
-            script: "@echo off\r\ngit diff --name-only ${base}...HEAD",
+            script: """@echo off
+          git rev-parse --verify HEAD~1 >nul 2>nul
+          if %ERRORLEVEL% EQU 0 (
+            git diff --name-only HEAD~1..HEAD
+          ) else (
+            git show --pretty="" --name-only HEAD
+          )
+          """,
             returnStdout: true
           ).trim()
 
