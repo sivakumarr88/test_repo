@@ -31,7 +31,7 @@ pipeline {
             diffOut = isUnix()
               ? sh(script: """
                   git rev-parse --verify HEAD~1 >/dev/null 2>&1
-                  if [ $? -eq 0 ]; then
+                  if [ \$? -eq 0 ]; then
                     git diff --name-only HEAD~1..HEAD
                   else
                     git show --pretty='' --name-only HEAD
