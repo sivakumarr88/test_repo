@@ -3,46 +3,33 @@ pipeline {
   options { timestamps() }
 
   environment {
-    DEFAULT_BASE = "origin/main"   // change to origin/master if needed
+    DEFAULT_BASE = "origin/main"   // change to origin/master if your default branch is master
   }
 
   stages {
     stage('Checkout') {
-      options { skipDefaultCheckout(true) }
       steps {
         checkout scm
-        bat 'git --version'
+        sh 'git --version'
       }
     }
 
     stage('Detect changes') {
       steps {
         script {
-          bat 'git fetch --all --prune'
+          sh 'git fetch --all --prune'
 
+          // If this is a PR build and CHANGE_TARGET is available, diff against that branch.
           def base = env.CHANGE_TARGET ? "origin/${env.CHANGE_TARGET}" : env.DEFAULT_BASE
 
-          // Get changed files (CMD). If nothing changed, output will be empty.
-          def diffOut = bat(
-            script: """@echo off
-          git rev-parse --verify HEAD~1 >nul 2>nul
-          if %ERRORLEVEL% EQU 0 (
-            git diff --name-only HEAD~1..HEAD
-          ) else (
-            git show --pretty="" --name-only HEAD
-          )
-          """,
-            returnStdout: true
-          ).trim()
-
-          // Jenkins on Windows may include extra CR; normalize
-          diffOut = diffOut.replace("\r", "")
-
-          def files = diffOut ? diffOut.split("\n") as List : []
+          // List changed files between base and current HEAD
+          def diff = sh(script: "git diff --name-only ${base}...HEAD", returnStdout: true).trim()
+          def files = diff ? diff.split("\n") as List : []
 
           echo "Base for diff: ${base}"
           echo "Changed files:\n- " + (files ? files.join("\n- ") : "(none)")
 
+          // Flags for modules
           env.RUN_MODULE1 = files.any { it.startsWith("module1/") }.toString()
           env.RUN_MODULE2 = files.any { it.startsWith("module2/") }.toString()
 
@@ -60,7 +47,7 @@ pipeline {
           if (env.RUN_MODULE1 == "true") {
             branches["module1"] = {
               def m1 = load("module1/Jenkinsfile_module1")
-              m1.run1()
+              m1.run()
             }
           }
 
