@@ -22,9 +22,32 @@ pipeline {
           // If this is a PR build and CHANGE_TARGET is available, diff against that branch.
           def base = env.CHANGE_TARGET ? "origin/${env.CHANGE_TARGET}" : env.DEFAULT_BASE
 
-          // List changed files between base and current HEAD
-          def diff = sh(script: "git diff --name-only ${base}...HEAD", returnStdout: true).trim()
-          def files = diff ? diff.split("\n") as List : []
+          // List changed files between base and current HEAD, with a fallback for single-commit cases
+          def diffOut = isUnix()
+            ? sh(script: "git diff --name-only ${base}...HEAD", returnStdout: true).trim()
+            : bat(script: "@echo off\r\ngit diff --name-only ${base}...HEAD", returnStdout: true).trim()
+
+          if (!diffOut) {
+            diffOut = isUnix()
+              ? sh(script: """
+                  git rev-parse --verify HEAD~1 >/dev/null 2>&1
+                  if [ $? -eq 0 ]; then
+                    git diff --name-only HEAD~1..HEAD
+                  else
+                    git show --pretty='' --name-only HEAD
+                  fi
+                """, returnStdout: true).trim()
+              : bat(script: """@echo off
+                  git rev-parse --verify HEAD~1 >nul 2>nul
+                  if %ERRORLEVEL% EQU 0 (
+                    git diff --name-only HEAD~1..HEAD
+                  ) else (
+                    git show --pretty="" --name-only HEAD
+                  )
+                """, returnStdout: true).trim()
+          }
+
+          def files = diffOut ? diffOut.split("\n") as List : []
 
           echo "Base for diff: ${base}"
           echo "Changed files:\n- " + (files ? files.join("\n- ") : "(none)")
